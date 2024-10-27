@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6.4.0 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/rung.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar bg-dark text-white">
+        <div class="logo mb-4">
+            <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+        </div>
+        <a href="profile.html">
+            <i class="fa-solid fa-user me-2"></i> Profile
+        </a>
+        <a href="datasensor.html">
+            <i class="fa-solid fa-database me-2"></i> Data Sensor
+        </a>
+        <a href="history.html">
+            <i class="fa-solid fa-history me-2"></i> History
+        </a>
+        <a href="index.html">
+            <i class="fa-solid fa-tachometer-alt me-2"></i> Dashboard
+        </a>
+        <a href="baocao.html" class="active">
+            <i class="fa-solid fa-tachometer-alt me-2"></i> Báo cáo
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="row mb-4">
+            <!-- d thiet bi-->
+            <div class="row mb-4">
+                <div class="card col-md-5 mb-3"> <!-- Increased bottom margin for spacing -->
+                    <div class="card-body d-flex align-items-center">
+                        <i class="fas fa-lightbulb fa-2x"></i>
+                        <div class="form-check">
+                            <label class="form-check-label" for="gioSwitch">Đèn cảnh báo</label>
+                            <input class="form-check-input device-switch" type="checkbox" id="gioSwitch" checked>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 mx-auto">
+                    <div class="card text-white h-100" id="col-alarm-light">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-3x"></i>
+                            <h5 class="card-title mt-3 text-black">Số lần báo động</h5>
+                            <h3 class="text-black" id="gioCount">Đang tải...</h3>
+                        </div>
+                    </div>
+                </div>
+                <!-- Gió -->
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white h-100" id="col-gio">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <i class="fas fa-wind fa-3x"></i>
+                            <h5 class="card-title mt-3">Gió</h5>
+                            <p class="card-text display-4" id="gio">-- m/s</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Lower Section: Charts and Controls -->
+        <div class="row">
+            <!-- Left Column: Charts (50%) -->
+            <div class="col-lg-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        Dữ liệu nhiệt độ, độ ẩm, gió theo thời gian thực
+                    </div>
+                    <div class="card-body">
+                        <canvas id="myChart" width="300" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- You can add more content here if needed -->
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Kết nối với Socket.io
+        const socket = io(); // Kết nối tới cùng origin
+        const gioElement = document.getElementById('gio');
+        // Khởi tạo Chart.js cho Nhiệt độ và Độ ẩm và gió
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const chartData = {
+            labels: [], // Thời gian sẽ được cập nhật
+            datasets: [
+                {
+                    label: 'Gió (m/s)',
+                    data: [],
+                    borderColor: 'rgba(128, 128, 128, 1)',  // Màu xám
+                    backgroundColor: 'rgba(128, 128, 128, 0.2)',  // Màu xám nhạt
+                    fill: true,
+                    tension: 0.4
+                }
+
+            ]
+        };
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Thời gian'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Giá trị'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hàm cập nhật biểu đồ Nhiệt độ và Độ ẩm
+        function updateChartGio(data) {
+            const timeLabel = new Date(data.createdAt).toLocaleTimeString();
+            chartData.labels.push(timeLabel);
+            chartData.datasets[0].data.push(data.gio);
+            // Giới hạn số lượng điểm dữ liệu trên chart (ví dụ: 20 điểm)
+            if (chartData.labels.length > 20) {
+                chartData.labels.shift();
+                chartData.datasets.forEach(dataset => dataset.data.shift());
+            }
+            myChart.update();
+        }
+        // Hàm cập nhật màu cho các panel
+        function updateBackground(value, type) {
+            let color;
+            if (type === "gio") {
+                color = `linear-gradient(200deg, rgb(18, 39, 49), rgb(86, 3, ${value * 4.2}))`;
+                document.querySelector("#col-gio").style.background = color;
+            }
+        }
+        // Hàm cập nhật các khối số liệu
+        function updatePanels(data) {
+            gioElement.textContent = `${data.gio} m/s`;
+            updateBackground(data.gio, 'gio');
+            shakeWindBlock(data.gio);
+        }
+
+        // Nhận dữ liệu thời gian thực từ Socket.io
+        socket.on('newSensorData', (data) => {
+            console.log('Received new sensor data:', data);
+            updateChartGio(data);
+            updatePanels(data);
+        });
+        function shakeWindBlock(value) {
+            const windBlock = document.getElementById('col-gio');
+            const alarmBlock = document.getElementById('col-alarm-light');
+            if (value > 70) {
+                windBlock.classList.add('shake'); // Thêm lớp shake để bắt đầu hiệu ứng
+                windBlock.style.backgroundColor = 'rgba(255, 0, 0, 0.5)'; // Thay đổi màu sắc thành đỏ
+                // Thêm hiệu ứng nháy màu đỏ đen cho col-alarm-light
+                alarmBlock.classList.add('blink');
+                const gioSwitch = document.getElementById('gioSwitch');
+            } else {
+                windBlock.classList.remove('shake'); // Loại bỏ lớp shake khi giá trị không còn lớn hơn 60
+                windBlock.style.backgroundColor = ''; // Khôi phục màu sắc mặc định
+                // Loại bỏ hiệu ứng nháy màu đỏ đen cho col-alarm-light
+                alarmBlock.classList.remove('blink');
+            }
+        }
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes blink {
+            0% { background-color: rgba(255, 0, 0, 0.5); }
+            50% { background-color: rgba(0, 0, 0, 0.5); }
+            100% { background-color: rgba(255, 0, 0); }
+            }
+            .blink {
+            animation: blink 0.5s infinite;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Fetch dữ liệu ban đầu từ backend
+        fetch('/api/sensor-data')
+            .then(response => response.json())
+            .then(data => {
+                // Giả sử data là mảng các dữ liệu sensor, sắp xếp theo thời gian
+                data.forEach(item => {
+                    updateChartGio(item);
+                    updatePanels(item);
+                });
+            })
+            .catch(error => console.error('Error fetching initial data:', error));
+
+        // Hàm gửi yêu cầu điều khiển thiết bị
+        function controlDevice(device, action) {
+            fetch('/api/control', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ device, action })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(`Control ${device}:`, data.message);
+                })
+                .catch(error => console.error(`Error controlling ${device}:`, error));
+        }
+
+        // Hàm cập nhật trạng thái switch dựa trên dữ liệu nhận được
+        function updateSwitches(status) {
+            const gioSwitch = document.getElementById('gioSwitch');
+            gioSwitch.checked = (status.all === "ON")
+
+        }
+        // Lấy trạng thái thiết bị khi trang tải
+        window.onload = () => {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    updateSwitches(data);
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        };
+
+        // Lắng nghe sự kiện cập nhật trạng thái thiết bị từ Socket.io
+        socket.on('deviceStatusUpdate', (status) => {
+            console.log('Device status update:', status);
+            updateSwitches(status);
+        });
+        // Thêm sự kiện cho các toggle switch
+        document.querySelectorAll('.device-switch').forEach(checkbox => {
+            checkbox.addEventListener('change', (event) => {
+                const labelElement = event.target.previousElementSibling; // Lấy label bên cạnh switch
+                const deviceLabel = labelElement.textContent.trim();
+                const deviceMap = {
+                    'Đèn cảnh báo': 'đèn cảnh báo'
+                };
+                const device = deviceMap[deviceLabel];
+                const action = event.target.checked ? 'on' : 'off';
+                controlDevice(device, action);
+            });
+        });
+        // Hàm lấy dữ liệu từ API
+        function fetchGioCount() {
+            $.ajax({
+                url: '/api/gio/count', // Đường dẫn đến API để lấy số lần gió > 60
+                method: 'GET',
+                success: function (data) {
+                    // Hiển thị số lần gió > 60 trên trang web
+                    $('#gioCount').text(data.count);
+                },
+                error: function () {
+                    $('#gioCount').text('Không thể lấy dữ liệu.');
+                }
+            });
+        }
+
+        // Gọi API ngay khi trang được tải
+        $(document).ready(function () {
+            fetchGioCount();
+            // Cập nhật số lần gió > 60 mỗi 1 giâyF
+            setInterval(fetchGioCount, 1000);
+        });
+    </script>
+
+</body>
+
+</html>
