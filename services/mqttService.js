@@ -96,7 +96,7 @@ class MQTTService extends EventEmitter {
     });
   }
 
-  // Hàm để lấy trạng thái thiết bị hiện tại
+  // Hàm để lấy trạng thái thiết bị hiện tại cho api status cập nhật liên tục
   getCurrentDeviceStatus() {
     return this.currentDeviceStatus;
   }

@@ -1,4 +1,4 @@
-// controllers/sensorController.js
+// controllers/sensorController.js lấy dữ liệu cho api sensor-data
 const SensorData = require('../models/SensorData');
 
 exports.getSensorData = async (req, res) => {

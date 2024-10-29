@@ -24,10 +24,10 @@ const startDataAggregation = (mqttService) => {
     } else {
       console.log('Không có dữ liệu sensor mới để lưu.');
     }
-  }, 1000 * 20); // Thời gian bao lâu thì lưu data 1 lần
+  }, 1000 * 2); // Thời gian bao lâu thì lưu data 1 lần
 };
 
-
+// lấy số lần gió > 70 từ Datasensor trong ngày
 const getGioCount = async (req, res) => {
   try {
     // Lấy ngày hiện tại và trừ đi 7 giờ để khớp với thời gian trong db

@@ -149,7 +149,6 @@
 
     // Khởi tạo Chart.js cho Nhiệt độ và Độ ẩm
     const ctx = document.getElementById('myChart').getContext('2d');
-
     const chartData = {
       labels: [], // Thời gian sẽ được cập nhật
       datasets: [
@@ -208,7 +207,6 @@
         }
       ]
     };
-
     const myChartl = new Chart(ctxl, {
       type: 'line',
       data: chartDataLight,
@@ -297,17 +295,7 @@
     });
 
     // Fetch dữ liệu ban đầu từ backend
-    fetch('/api/sensor-data')
-      .then(response => response.json())
-      .then(data => {
-        // Giả sử data là mảng các dữ liệu sensor, sắp xếp theo thời gian
-        data.forEach(item => {
-          updateChartTemperatureHumidity(item);
-          updateChartLight(item);
-          updatePanels(item);
-        });
-      })
-      .catch(error => console.error('Error fetching initial data:', error));
+    
 
     // Hàm gửi yêu cầu điều khiển thiết bị
     function controlDevice(device, action) {
@@ -335,9 +323,9 @@
       acSwitch.checked = (status.ac === "ON");
       lightSwitch.checked = (status.led1 === "ON"); // Giả sử 'led1' là đèn
     }
-    // Lấy trạng thái thiết bị khi trang tải
+    // Lấy trạng thái thiết bị khi trang tải. Không giúp ích lắm nhưng mà nhanh hơn
     window.onload = () => {
-      fetch('/api/status')
+      fetch('/api/status-data')
         .then(response => response.json())
         .then(data => {
           updateSwitches(data);

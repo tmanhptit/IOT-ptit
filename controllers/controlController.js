@@ -1,6 +1,6 @@
 // controllers/controlController.js
 const mqttService = require('../services/mqttService');
-const ActionData = require('../models/ActionData'); // Thêm dòng này
+const ActionData = require('../models/ActionData'); 
 
 exports.controlDevice = async (req, res) => {
   const { device, action } = req.body;

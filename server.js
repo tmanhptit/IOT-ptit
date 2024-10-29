@@ -54,7 +54,7 @@ app.use('/api/status-data', statusRoutes);  // Cập nhật status cho các devi
 app.use('/api/sensor-data', sensorRoutes); // lấy dữ liệu cảm biến
 app.use('/api/control', controlRoutes); // Gửi post api gửi cho hardware điều kiển thiết bị
 app.use('/api/action',actionRoutes); // Lấy dữ liệu trạng thái của thiết bị
-app.use('/api/gio', gioRoutes); // Lấy dữ liệu gió
+app.use('/api/gio/count', gioRoutes); // Lấy dữ liệu gió > 70 trong ngày
 
 
 
@@ -65,9 +65,6 @@ mqttService.setIO(io);
 
 // Khởi chạy Data Aggregation
 const { startDataAggregation } = require('./utils/dataAggregator');
-const ActionData = require('./models/ActionData');
-
-
 startDataAggregation(mqttService);
 
 // Bắt đầu server
