@@ -35,8 +35,11 @@ exports.getSensorData = async (req, res) => {
       const dateValue = new Date(createdAt);
       if (!isNaN(dateValue.getTime())) {
         const startDate = new Date(dateValue);
+        startDate.setSeconds(0, 0); // Đặt giây và mili giây thành 0
+
         const endDate = new Date(startDate);
-        endDate.setSeconds(startDate.getSeconds() + 1);
+        endDate.setMinutes(startDate.getMinutes() + 1); // Thêm 1 phút để lấy khoảng thời gian đến hết phút đó
+
         filter.createdAt = {
           $gte: startDate,
           $lt: endDate

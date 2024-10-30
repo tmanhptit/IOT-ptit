@@ -117,9 +117,9 @@
         function convertToISODate(dateString) {
             const [datePart, timePart] = dateString.split(' ');
             const [day, month, year] = datePart.split('/');
-            const [hour, minute, second] = timePart.split(':');
+            const [hour, minute] = timePart.split(':');
 
-            const isoDateString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+            const isoDateString = `${year}-${month}-${day}T${hour}:${minute}:00`;
             return new Date(isoDateString).toISOString();
         }
 
